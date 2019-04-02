@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
+from mptt.models import MPTTModel, TreeForeignKey
 
 
 class UserProfileManager(BaseUserManager):
@@ -25,8 +26,8 @@ class UserProfileManager(BaseUserManager):
 
 class UserProfile(AbstractBaseUser, PermissionsMixin):
     """Represents a user profile inside our system"""
-    email = models.EmailField(max_length=255, unique=True)
-    name = models.CharField(max_length=255)
+    email = models.EmailField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -51,7 +52,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 class Post(models.Model):
     """Submit your content for review."""
     user_profile = models.ForeignKey('UserProfile', on_delete=models.CASCADE)
-    title = models.CharField(max_length=500)
+    title = models.CharField(max_length=100)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -106,3 +107,15 @@ class ReviewUpload(models.Model):
         """Return manuscript title"""
         return self.review.title
 
+class Department(MPTTModel):
+    """Department"""
+    name = models.CharField(max_length=50)
+    identifier = models.CharField(max_length=50, unique=True)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+
+    class MPTTMeta:
+        order_insertion_by = ['name']
+    
+    def __str__(self):
+        """Return department name"""
+        return self.name
